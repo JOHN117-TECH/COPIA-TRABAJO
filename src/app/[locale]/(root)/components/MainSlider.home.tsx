@@ -19,15 +19,6 @@ const MainSlider = () => {
   //console.log('ITEMS: ' + items);
   return (
     <>
-      {/* <Slider 
-      whiteDots
-      whiteArrows 
-      fullWidthDots 
-      showArrows={!isMobile}
-      items={SLIDES_BANNER_HOME} 
-    >
-      <Slider.Simple hasTranslation customHeight="h-[90vh]"/>
-    </Slider> */}
       <div>
         {/* <MixedCarousel items={items} /> */}
         <HomeSlider items={SLIDES_BANNER_HOME} />

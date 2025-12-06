@@ -1,113 +1,164 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import Image, { StaticImageData } from 'next/image';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation } from 'swiper/modules';
+import type { Swiper as SwiperClass } from 'swiper';
+import { Navigation, Autoplay } from 'swiper/modules';
+
 import 'swiper/css';
 import 'swiper/css/navigation';
-import { object } from 'zod';
-import { SLIDES_BANNER_HOME } from '@/app/[locale]/(root)/assets/constants/constants';
 
-export interface SlideItem {
-  type: 'image' | 'video';
-  src: string | StaticImageData;
-  srcMobile?: string;
-  vimeoId?: string;
+type SlideItem = {
+  src?: string | StaticImageData; // para imágenes
   title?: string;
   description?: string;
-  buttonText?: string;
-  path?: string;
-}
+  type?: string; // 👈 ahora es cualquier string y opcional
+  videoUrl?: string; // ej: 'https://player.vimeo.com/video/1111986027?...'
+};
 
-export interface Props {
+interface HomeSliderProps {
   items: SlideItem[];
-  duration?: number; // ← Ahora opcional
+  timePerSlide?: number; // ms, por defecto 8000
 }
 
-export default function HomeSlider({ items, duration = 8000 }: Props) {
+const HomeSlider = ({ items, timePerSlide = 8000 }: HomeSliderProps) => {
   const [activeIndex, setActiveIndex] = useState(0);
-  const [progress, setProgress] = useState(0);
-  const swiperRef = useRef<any>(null);
+  const swiperRef = useRef<SwiperClass | null>(null);
 
-  console.log('ITEMS: ' + JSON.stringify(items));
-
-  /*  items.map((slide, i) => {
-    if (slide.src as StaticImageData) {
-      console.log(slide.src);
-    }
-  }); */
-
-  function resolveImageSrc(input: string | StaticImageData): string {
-    if (typeof input === 'string') return input;
-    return input.src; // StaticImageData
-  }
-  const intervalRef = useRef<number | null>(null);
-  const startTimeRef = useRef<number>(0);
-
-  const startProgress = () => {
-    if (!swiperRef.current) return;
-
-    setProgress(0);
-    startTimeRef.current = Date.now();
-
-    if (intervalRef.current !== null) {
-      clearInterval(intervalRef.current);
-    }
-
-    intervalRef.current = window.setInterval(() => {
-      const elapsed = Date.now() - startTimeRef.current;
-      const pct = Math.min(elapsed / duration, 1);
-      setProgress(pct * 100);
-      if (pct === 1) swiperRef.current.slideNext();
-    }, 50);
-  };
-
-  const handleSlideChange = (swiper: any) => {
-    setActiveIndex(swiper.activeIndex);
-    startProgress();
-  };
-
-  useEffect(() => {
-    return () => {
-      if (intervalRef.current !== null) clearInterval(intervalRef.current);
-    };
-  }, []);
+  if (!items || !items.length) return null;
 
   return (
-    <div className="relative w-full h-[90vh]">
+    <section className=" w-full text-white">
+      {/* SLIDER PRINCIPAL */}
       <Swiper
-        modules={[Navigation]}
-        navigation
-        onSwiper={(s) => (swiperRef.current = s)}
-        onSlideChange={handleSlideChange}
-        onInit={startProgress}
-        className="w-full h-full"
+        modules={[Navigation, Autoplay]}
+        onSwiper={(swiper) => {
+          swiperRef.current = swiper;
+        }}
+        onSlideChange={(swiper) => {
+          setActiveIndex(swiper.realIndex ?? swiper.activeIndex);
+        }}
+        slidesPerView={1}
+        loop
+        autoplay={{
+          delay: timePerSlide,
+          disableOnInteraction: false,
+        }}
+        allowTouchMove
+        className="w-full"
       >
-        {items.map((slide, i) => (
-          <SwiperSlide key={i}>
-            <div className="relative w-full h-[90vh]">
-              {slide.type === 'image' && (
-                <Image
-                  src={slide.src}
-                  alt={slide.title ?? ''}
-                  fill
-                  priority={i === 0}
-                  className="object-cover"
-                />
-              )}
+        {items.map((item, index) => {
+          // 👉 Detectamos si este slide es un vídeo (Vimeo)
+          const isVideo =
+            item.type === 'video' ||
+            (typeof item.videoUrl === 'string' &&
+              item.videoUrl.includes('player.vimeo.com')) ||
+            (typeof item.src === 'string' &&
+              item.src.includes('player.vimeo.com'));
 
-              {slide.type === 'video' && (
-                <iframe
-                  src={slide.src as string}
-                  className="absolute inset-0 w-full h-full object-cover"
-                  allow="autoplay; fullscreen"
-                />
-              )}
-            </div>
-          </SwiperSlide>
-        ))}
+          const videoUrl = item.videoUrl ?? (item.src as string | undefined);
+
+          return (
+            <SwiperSlide key={index}>
+              <div className="relative w-full h-[420px] md:h-[520px] lg:h-[620px]">
+                {isVideo && videoUrl ? (
+                  // 🎥 VÍDEO (Vimeo) → NUNCA usar <Image> aquí
+                  <iframe
+                    src={videoUrl}
+                    className="h-full w-full"
+                    allow="autoplay; fullscreen; picture-in-picture"
+                    allowFullScreen
+                  />
+                ) : (
+                  // 🖼 IMAGEN NORMAL
+                  item.src && (
+                    <Image
+                      src={item.src}
+                      alt={item.title ?? `Slide ${index + 1}`}
+                      fill
+                      priority={index === 0}
+                      className="object-cover"
+                    />
+                  )
+                )}
+
+                {/* Degradado y contenido (igual que antes) */}
+                <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-black/10" />
+                <div className="relative z-10 flex h-full items-center px-6 md:px-16 lg:px-24">
+                  <div className="max-w-xl space-y-4">
+                    {item.title && (
+                      <h2 className="text-3xl md:text-4xl lg:text-5xl font-semibold leading-tight">
+                        {item.title}
+                      </h2>
+                    )}
+                    {item.description && (
+                      <p className="text-sm md:text-base text-white/80">
+                        {item.description}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </SwiperSlide>
+          );
+        })}
       </Swiper>
-    </div>
+
+      {/* FLECHAS */}
+      <button
+        type="button"
+        aria-label="Previous slide"
+        onClick={() => swiperRef.current?.slidePrev()}
+        className="absolute left-6 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white text-black shadow-md hover:scale-105 transition"
+      >
+        ‹
+      </button>
+
+      <button
+        type="button"
+        aria-label="Next slide"
+        onClick={() => swiperRef.current?.slideNext()}
+        className="absolute right-6 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white text-black shadow-md hover:scale-105 transition"
+      >
+        ›
+      </button>
+
+      {/* TABS CON BARRA DE PROGRESO (ya las tenías configuradas) */}
+      <div className="pointer-events-none absolute bottom-8 left-1/2 z-20 flex w-full max-w-xl -translate-x-1/2 gap-3 px-6">
+        {items.map((_, index) => {
+          const isActive = index === activeIndex;
+          const isDone = index < activeIndex;
+
+          return (
+            <button
+              key={index}
+              type="button"
+              onClick={() => swiperRef.current?.slideToLoop(index)}
+              className="pointer-events-auto flex-1"
+            >
+              <div className="progress-tab">
+                <span
+                  className={
+                    'progress-tab-fill bg-emerald-400 ' +
+                    (isActive ? 'progress-bar-animate' : '')
+                  }
+                  style={
+                    isActive
+                      ? { animationDuration: `${timePerSlide}ms` }
+                      : {
+                          animation: 'none',
+                          transform: `scaleX(${isDone ? 1 : 0})`,
+                        }
+                  }
+                />
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </section>
   );
-}
+};
+
+export default HomeSlider;
