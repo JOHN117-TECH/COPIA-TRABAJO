@@ -9,6 +9,7 @@ interface VimeoSlideProps {
   onPlay: () => void;
   onPause: () => void;
   onEnded: () => void;
+  className?: string;
 }
 
 export default function VimeoSlide({
@@ -17,11 +18,12 @@ export default function VimeoSlide({
   onPlay,
   onPause,
   onEnded,
+  className,
 }: VimeoSlideProps) {
   const lastUpdate = useRef(0);
 
   return (
-    <div className="w-full h-full overflow-hidden">
+    <div className={`w-full h-full overflow-hidden ${className}`}>
       <VimeoPlayer
         video={vimeoId}
         autoplay

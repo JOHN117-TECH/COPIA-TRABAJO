@@ -8,13 +8,15 @@ import { Navigation, Autoplay } from 'swiper/modules';
 
 import 'swiper/css';
 import 'swiper/css/navigation';
+import VimeoSlide from './VimeoSlide';
 
 type SlideItem = {
   src?: string | StaticImageData; // para imágenes
   title?: string;
   description?: string;
   type?: string; // 👈 ahora es cualquier string y opcional
-  videoUrl?: string; // ej: 'https://player.vimeo.com/video/1111986027?...'
+  videoUrl?: string;
+  vimeoId?: string;
 };
 
 interface HomeSliderProps {
@@ -25,7 +27,7 @@ interface HomeSliderProps {
 const HomeSlider = ({ items, timePerSlide = 8000 }: HomeSliderProps) => {
   const [activeIndex, setActiveIndex] = useState(0);
   const swiperRef = useRef<SwiperClass | null>(null);
-
+  const [videoProgress, setVideoProgress] = useState(0);
   if (!items || !items.length) return null;
 
   return (
@@ -64,11 +66,28 @@ const HomeSlider = ({ items, timePerSlide = 8000 }: HomeSliderProps) => {
               <div className="relative w-full h-[420px] md:h-[520px] lg:h-[620px]">
                 {isVideo && videoUrl ? (
                   // 🎥 VÍDEO (Vimeo) → NUNCA usar <Image> aquí
-                  <iframe
-                    src={videoUrl}
+
+                  <VimeoSlide
                     className="h-full w-full"
-                    allow="autoplay; fullscreen; picture-in-picture"
-                    allowFullScreen
+                    vimeoId={item.vimeoId!}
+                    onProgress={(percent) => {
+                      // solo nos importa el slide activo
+                      setVideoProgress(percent);
+                    }}
+                    onPlay={() => {
+                      // por si acaso, paramos autoplay
+                      if (swiperRef.current?.autoplay) {
+                        swiperRef.current.autoplay.stop();
+                      }
+                    }}
+                    onPause={() => {
+                      // aquí podrías pausar animaciones si tuvieras
+                    }}
+                    onEnded={() => {
+                      // barra al 100% y pasamos al siguiente
+                      setVideoProgress(100);
+                      swiperRef.current?.slideNext();
+                    }}
                   />
                 ) : (
                   // 🖼 IMAGEN NORMAL
@@ -126,9 +145,18 @@ const HomeSlider = ({ items, timePerSlide = 8000 }: HomeSliderProps) => {
 
       {/* TABS CON BARRA DE PROGRESO (ya las tenías configuradas) */}
       <div className="pointer-events-none absolute bottom-8 left-1/2 z-20 flex w-full max-w-xl -translate-x-1/2 gap-3 px-6">
-        {items.map((_, index) => {
+        {items.map((item, index) => {
           const isActive = index === activeIndex;
-          const isDone = index < activeIndex;
+
+          // si tienes videoProgress, puedes seguir usándolo aquí
+          const isVideoTab =
+            item.type === 'video' ||
+            (typeof item.videoUrl === 'string' &&
+              item.videoUrl.includes('player.vimeo.com')) ||
+            (typeof item.src === 'string' &&
+              item.src.includes('player.vimeo.com'));
+
+          const isActiveVideo = isActive && isVideoTab;
 
           return (
             <button
@@ -140,15 +168,25 @@ const HomeSlider = ({ items, timePerSlide = 8000 }: HomeSliderProps) => {
               <div className="progress-tab">
                 <span
                   className={
-                    'progress-tab-fill bg-emerald-400 ' +
-                    (isActive ? 'progress-bar-animate' : '')
+                    'progress-tab-fill ' +
+                    (isActive ? 'bg-emerald-400' : 'bg-white/30') // 🟢 solo activo
                   }
                   style={
                     isActive
-                      ? { animationDuration: `${timePerSlide}ms` }
+                      ? isActiveVideo
+                        ? {
+                            // vídeo: barra según porcentaje real
+                            animation: 'none',
+                            transform: `scaleX(${videoProgress / 100})`,
+                          }
+                        : {
+                            // imagen: animación normal de tiempo
+                            animationDuration: `${timePerSlide}ms`,
+                          }
                       : {
+                          // ❗ cualquier NO activo vuelve a 0
                           animation: 'none',
-                          transform: `scaleX(${isDone ? 1 : 0})`,
+                          transform: 'scaleX(0)',
                         }
                   }
                 />

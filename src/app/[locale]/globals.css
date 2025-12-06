@@ -449,14 +449,15 @@ input[type='search']::-webkit-search-cancel-button {
   position: relative;
   width: 100%;
   height: 6px;
-  border-radius: 9999px; /* full rounded */
-  background-color: rgba(255, 255, 255, 0.25); /* gris claro */
+  border-radius: 9999px;
+  background-color: rgba(255, 255, 255, 0.25);
   overflow: hidden;
 }
 
 .progress-tab-fill {
   position: absolute;
   inset: 0;
+  border-radius: 9999px;
   transform-origin: left;
 }
 
@@ -475,3 +476,15 @@ input[type='search']::-webkit-search-cancel-button {
   animation-timing-function: linear;
   animation-fill-mode: forwards;
 }
+
+/* .swiper {
+  width: 100%;
+  height: 100%;
+}
+
+.swiper-slide {
+  display: flex;
+  flex-direction: 'row';
+  width: 100%;
+}
+ */

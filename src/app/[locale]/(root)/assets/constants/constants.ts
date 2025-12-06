@@ -20,6 +20,8 @@ import homeMobileTrucks from "../images/home-mobil-trucks.jpg";
 import homeDeskHosp from "../images/home-desk-hospitality.jpg";
 
 
+
+
 export const SLIDES_BANNER_HOME = [
   {
     type: "image",
