@@ -1,0 +1,47 @@
+
+fragment SinglePatternSustainabilityAttributes on SustainabilityNode {
+  id
+  biobasedPvcBioAttributed
+  phthalateFreeProduct
+  phthalateFreeProductCertificateFile
+  frFree
+  frFreeCertificateFile
+  mpFree
+  mpFreeCertificateFile
+  cytotoxicity
+  cytotoxicityCertificateFile
+  skinSafeSensitization
+  skinSafeSensitizationCertificateFile
+  antimicrobial
+  backingProfile
+  backingProfileLogo
+  prop65
+  prop65Logo
+  prop65CertificateFile
+  rohs
+  rohsLogo
+  rohsCertificateFile
+  reach
+  reachLogo
+  reachCertificateFile
+  greenguard
+  greenguardLogo
+  greenguardCertificateFile
+  indoorAirQuality
+  indoorAirQualityCertificateFile
+  indoorAirQualityLogo
+  globalRecycledStandard
+  globalRecycledStandardLogo
+  globalRecycledStandardCertificateFile
+  aPlusEmissions
+  aPlusEmissionsLogo
+  aPlusEmissionsCertificateFile
+  epd
+  epdCertificateFile
+  leed
+  leedLogo
+  well
+  wellLogo
+  packagingFscLogo
+  __typename
+}

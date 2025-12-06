@@ -1,0 +1,19 @@
+fragment MarketFields on MarketNode {
+  id
+  slug
+  name
+  description
+  imageThumbMedium
+  sectors {
+    edges {
+      node {
+        id
+        name
+        slug
+        patternSet(products_Instances: $instanceIds, saleable: $saleable) {
+          totalCount
+        }
+      }
+    }
+  }
+}

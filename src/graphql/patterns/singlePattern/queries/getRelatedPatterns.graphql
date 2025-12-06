@@ -1,0 +1,47 @@
+#import "../fragments/singlePattern.fragment.graphql"
+
+query getRelatedPatterns($slug: String, $instanceIds: [ID]) {
+  pattern(slug: $slug) {
+    relatedPatterns(products_Instances: $instanceIds) {
+      totalCount
+      edges {
+        node {
+          ...SinglePattern
+          sectors{
+            edges{
+              node{
+                name
+              }
+            }
+          }
+          imageThumbSmall
+          products(instances: $instanceIds) {
+            totalCount
+            edges {
+              node {
+                id
+                code
+                color
+                predominantColors
+                hasStock
+                samplesAvailable
+                stock
+                pantone
+                imageThumbSmall
+                imageThumbMedium
+                imageThumbLarge
+                isNew
+                __typename
+              }
+              __typename
+            }
+            __typename
+          }
+          __typename
+        }
+        __typename
+      }
+      __typename
+    }
+  }
+}

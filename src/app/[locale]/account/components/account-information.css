@@ -1,0 +1,5 @@
+.account-form-group:last-child {
+  hr {
+    display: none;
+  }
+}

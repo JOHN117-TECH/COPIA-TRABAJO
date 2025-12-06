@@ -1,0 +1,17 @@
+query getBrands($instanceIds: [ID], $isVisible: Boolean) {
+  brands(instances: $instanceIds, isVisible: $isVisible) {
+    edges {
+      node {
+        id
+        title
+        slug
+        brandType
+        reverseLogoSmall
+        imageThumbMedium
+        description
+        content
+        externalLink
+      }
+    }
+  }
+}

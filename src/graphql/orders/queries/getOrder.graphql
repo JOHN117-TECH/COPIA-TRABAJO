@@ -1,0 +1,54 @@
+query getOrder ($id: ID) {
+  order(id:$id){
+    id
+    status
+    user {
+      id
+    }
+    notes
+    created
+    updated
+    shippingAddress {
+      id
+      address
+      mainAddress
+      source
+      city {
+        id
+        name
+        country {
+          id
+        }
+        country {
+          id
+          name
+        }
+      }
+    }
+    items {
+      edges {
+        node {
+          id
+          pattern {
+            id
+            pattern{
+              id
+              name
+              slug
+            }
+          }
+          product {
+            id
+            color
+            code
+            pattern{
+              id
+              name
+              slug
+            }
+          }
+        }
+      }
+    }
+  }
+}

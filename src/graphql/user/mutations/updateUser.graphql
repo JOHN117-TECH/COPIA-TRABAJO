@@ -1,0 +1,6 @@
+mutation updateUser($input: UpdatePublicProfileInput!) {
+  updatePublicProfile(input: $input) {
+    clientMutationId
+    __typename
+  }
+}

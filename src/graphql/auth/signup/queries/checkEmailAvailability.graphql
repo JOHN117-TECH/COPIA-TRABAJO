@@ -1,0 +1,5 @@
+query checkEmailAvailability ($email: String!, $geographicInstanceId: ID!) {
+  isEmailAvailable(email: $email, instanceId: $geographicInstanceId) {
+    status
+  }
+}

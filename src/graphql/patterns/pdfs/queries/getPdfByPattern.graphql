@@ -1,0 +1,5 @@
+query PdfPatternQuery($id: ID, $slug: String, $unitSystem: Int) {
+        pattern(id: $id, slug: $slug) {
+          pdfUrl(fullVersion: false, unitSystem: $unitSystem)
+        }
+      }

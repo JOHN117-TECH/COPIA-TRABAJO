@@ -1,0 +1,39 @@
+query PostsQuery($first: Int, $last: Int, $afterCursor: String, $beforeCursor: String, $instances: [ID]!) {
+  posts(
+    first: $first
+    last: $last
+    after: $afterCursor
+    before: $beforeCursor
+    instances: $instances
+  ) {
+    totalCount
+    pageInfo {
+      ...PageInfoFragment
+      __typename
+    }
+    edges {
+      node {
+        id
+        title
+        slug
+        summary
+        tags
+        listingImageThumbSmall
+        instances {
+          edges {
+            node {
+              id
+              name
+              __typename
+            }
+            __typename
+          }
+          __typename
+        }
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+}

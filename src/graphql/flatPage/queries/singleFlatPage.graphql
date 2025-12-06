@@ -1,0 +1,7 @@
+query SingleFlatpageQuery($slug: String, $instanceId: ID) {
+  flatpage(slug: $slug, instance: $instanceId) {
+    id
+    title
+    content
+  }
+}

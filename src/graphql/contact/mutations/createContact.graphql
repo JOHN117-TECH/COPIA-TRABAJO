@@ -1,0 +1,9 @@
+mutation createContactHubspot($input: CreateContactHubSpotInput!) {
+  createContactHubspot(input: $input) {
+    contact {
+      id
+      __typename
+    }
+    __typename
+  }
+}

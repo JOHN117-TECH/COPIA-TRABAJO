@@ -1,0 +1,8 @@
+query getSocialMedia($instanceId: ID!) {
+  instance(id:$instanceId) {
+    id
+    facebookUrl
+    instagramUrl
+    linkedinUrl
+  }
+}

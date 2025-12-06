@@ -1,0 +1,21 @@
+query filters($instanceIds: [ID]!, $saleable: Boolean, $instanceID: ID!, $lang: String!) {
+  markets(instances: $instanceIds) {
+    edges {
+      node {
+        ...MarketFields
+      }
+    }
+  }
+  
+  flameRetardancyTests {
+    edges {
+      node {
+        id
+        name
+      }
+    }
+  }
+
+
+  filters: filtersByInstance(instanceId: $instanceID, lang: $lang)
+}

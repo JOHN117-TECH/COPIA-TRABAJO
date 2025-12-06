@@ -1,0 +1,88 @@
+#import "../fragments/singlePattern.fragment.graphql"
+#import "../fragments/pageInfo.fragment.graphql"
+
+query PatternsQuery($after: String, $first: Int, $productFirst: Int, $last: Int, $beforeCursor: String, $orderBy: String, $instanceIds: [ID], $predominantColor: String, $sectorIds: [ID], $design: String, $composition: String, $search: String, $brandsIds: [ID], $saleable: Boolean, $slugs: String) {
+  patterns(
+    first: $first
+    last: $last
+    after: $after
+    before: $beforeCursor
+    orderBy: $orderBy
+    search: $search
+    products_Instances: $instanceIds
+    products_PredominantColors_Contains: $predominantColor
+    sectors_In: $sectorIds
+    productcategorization_Design_Contains: $design
+    general_Composition_In: $composition
+    brands_In: $brandsIds
+    saleable: $saleable
+    slug_In: $slugs
+  ) {
+    totalCount
+    pageCursors {
+      around {
+        cursor
+        isCurrent
+        page
+      }
+      first {
+        cursor
+        isCurrent
+        page
+      }
+      last {
+        cursor
+        isCurrent
+        page
+      }
+      next {
+        cursor
+        isCurrent
+        page
+      }
+      previous {
+        cursor
+        isCurrent
+        page
+      }
+    }
+    edges {
+      node {
+        ...SinglePatternFragment
+        imageThumbSmall
+        sectors {
+          edges {
+            node {
+              id, 
+              name, 
+              nameEn
+            }
+          }
+        }
+        products(
+          first: $productFirst
+          instances: $instanceIds
+          predominantColors_Contains: $predominantColor
+        ) {
+          totalCount
+          edges {
+            node {
+              id
+              code
+              color
+              predominantColors
+              imageThumbSmall
+              isNew
+              __typename
+            }
+            __typename
+          }
+          __typename
+        }
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+}

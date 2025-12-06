@@ -1,0 +1,6 @@
+query getAddressSuggestions($instanceId: ID!, $address: String, $postalCode: String ) {
+  addressSuggestions(address: $address, instanceId: $instanceId, postalCode: $postalCode) {
+    description
+    placeId
+  }
+}

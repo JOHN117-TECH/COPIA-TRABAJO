@@ -1,0 +1,7 @@
+mutation TokenAuthV2($email: String!, $password: String!, $instanceId: ID!) {
+  tokenAuthV2(email: $email, password: $password, instanceId: $instanceId) {
+    token
+    success
+    fullName
+  }
+}

@@ -1,0 +1,30 @@
+query getStoresByInstance($instanceId: ID, $active: Boolean) {
+  stores(instance: $instanceId, active: $active) {
+    edges {
+      node {
+        id
+        name
+        address
+        phoneNumbers
+        email
+        latitude
+        longitude
+        website
+        active
+        city {
+          id
+          name
+          country {
+            id
+            name
+            __typename
+          }
+          __typename
+        }
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+}

@@ -1,0 +1,13 @@
+query getCertificates ($slug: String) {
+  certificates(domainsUrl: "https://spradling.group", slug: $slug){
+    edges{
+      node{
+        id
+        title
+        image
+        imageThumb
+        description
+      }
+    }
+  }
+}

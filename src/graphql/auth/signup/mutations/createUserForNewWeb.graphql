@@ -1,0 +1,30 @@
+mutation create_user (
+    $firstName: String!
+    $lastName: String!
+    $email: String!
+    $password: String!
+    $instanceId: ID!
+    $jobTitle: String!
+    $phone: String!
+    $company: String!
+    $termsAndConditions: Boolean!
+    $newsLatest: Boolean
+    $position: String!
+  ) {
+  createUserForNewWeb(
+    firstName: $firstName
+    lastName: $lastName
+    email: $email
+    password: $password
+    instanceId: $instanceId
+    position: $jobTitle
+    phone: $phone
+    company: $company
+    acceptTerms: $termsAndConditions
+    positionArea: $position
+    receiveNews: $newsLatest
+  ) {
+    userId
+    ok
+  }
+}

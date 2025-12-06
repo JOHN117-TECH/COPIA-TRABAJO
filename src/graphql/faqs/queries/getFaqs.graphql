@@ -1,0 +1,11 @@
+query getFAQs($instances: [ID]) {
+  faqs(instances: $instances) {
+    edges {
+      node {
+        id
+        question
+        answer
+      }
+    }
+  }
+}

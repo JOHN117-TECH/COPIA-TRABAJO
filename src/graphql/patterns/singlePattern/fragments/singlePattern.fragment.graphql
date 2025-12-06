@@ -1,0 +1,8 @@
+fragment SinglePattern on PatternNode {
+  id
+  name
+  altName
+  slug
+  isNew
+  __typename
+}

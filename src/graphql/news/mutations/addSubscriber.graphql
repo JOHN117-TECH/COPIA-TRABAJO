@@ -1,0 +1,13 @@
+mutation NEWSLETTER(
+    $email: String!
+    $firstName: String!
+    $lastName: String!
+  ) {
+    createEmailSubscriber(
+      email: $email
+      firstName: $firstName
+      lastName: $lastName
+    ) {
+      success
+    }
+  }

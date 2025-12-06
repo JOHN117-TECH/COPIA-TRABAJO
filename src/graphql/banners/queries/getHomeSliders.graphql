@@ -1,0 +1,21 @@
+query HomeSliders($instanceIds: [ID]!, $tag: String) {
+  homeSliders(instances: $instanceIds, tag: $tag) {
+    edges {
+      node {
+        id
+        title
+        description
+        buttonText
+        imageThumb
+        imagePhone
+        imagePhoneThumb
+        link
+        linkMobile
+        linkTarget
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+}

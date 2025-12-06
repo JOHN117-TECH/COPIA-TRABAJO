@@ -1,0 +1,13 @@
+query getCategories {
+  blogCategories{
+    edges{
+      node{
+        id
+        name
+        posts{
+          totalCount
+        }
+      }
+    }
+  }
+}

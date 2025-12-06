@@ -1,0 +1,15 @@
+mutation createUserAddress($userId: ID!, $placeId: String!, $instanceId: ID!, $addressInfo: String!, $isPrimary: Boolean!) {
+  createUserAddress(input: {userId: $userId, placeId: $placeId, instanceId: $instanceId, addressInfo: $addressInfo, isPrimary: $isPrimary}) {
+    address {
+      id
+      fullAddress
+      city
+      state
+      country
+      postalCode
+      addressInfo
+      isPrimary
+      placeId
+    }
+  }
+}

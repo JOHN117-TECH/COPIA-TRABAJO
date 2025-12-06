@@ -1,0 +1,29 @@
+query patterns_isNew{
+  patterns(saleable:true){
+    totalCount
+          edges {
+            node {
+              imageThumbSmall
+              products {
+                totalCount
+                edges {
+                  node {
+                    id
+                    code
+                    color
+                    predominantColors
+                    imageThumbSmall
+                    isNew
+                    __typename
+                  }
+                  __typename
+                }
+                __typename
+              }
+              __typename
+            }
+            __typename
+          }
+          __typename
+        }
+}

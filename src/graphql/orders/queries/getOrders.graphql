@@ -1,0 +1,42 @@
+query getorders ($page: Int, $size: Int, $created: String,){
+   orders(page:$page, size:$size, createdAfter: $created){
+    totalCount
+    results{
+      id
+      created
+      updated
+      items{
+        edges{
+          node {
+            id
+            quantity
+            pattern {
+              code
+              color
+              image
+              pattern{
+                name
+                id 
+                code
+              }
+            }
+            product {
+              code
+              color
+              image
+              pattern{
+                id 
+                name
+                code
+              }
+            }
+          }
+        }
+      }
+      user {
+        id
+      }
+      status
+    }
+  }
+}

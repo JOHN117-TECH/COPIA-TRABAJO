@@ -1,0 +1,29 @@
+query getOffices($orderBy: String) {
+  offices(orderBy: $orderBy) {
+    edges {
+      node {
+        id
+        name
+        address
+        business
+        latitude
+        longitude
+        phone
+        email
+        allEmails
+        city {
+          id
+          name
+          region {
+            id
+            name
+          }
+          country {
+            id
+            name
+          }
+        }
+      }
+    }
+  }
+}

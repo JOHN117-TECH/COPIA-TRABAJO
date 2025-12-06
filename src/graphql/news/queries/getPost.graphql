@@ -1,0 +1,10 @@
+query getPost ($slug: String){
+	post(slug: $slug){
+    id
+    title
+    summary
+    publicationDatetime
+    listingImageThumbSmall
+    content
+  }  
+}

@@ -1,0 +1,53 @@
+query GetPatternPreview($id: ID, $slug: String, $instanceIds: [ID]) {
+        pattern(id: $id, slug: $slug) {
+          ...SinglePatternFragment
+          code
+          products(instances: $instanceIds) {
+            totalCount
+            edges {
+              node {
+                id
+                code
+                color
+                predominantColors
+                imageThumbSmall
+                imageThumbMedium
+                imageThumbLarge
+                isNew
+                __typename
+              }
+              __typename
+            }
+            __typename
+          }
+          specsSheetData(
+            fullVersion: false
+            limitAdditionalTests: true
+          )
+          sectors {
+            edges {
+              node {
+                id
+                name
+                market {
+                  id
+                  name
+                  __typename
+                }
+                __typename
+              }
+              __typename
+            }
+            __typename
+          }
+          __typename
+        }
+      }
+      fragment SinglePatternFragment on PatternNode {
+        id
+        name
+        altName
+        slug
+        isNew
+        __typename
+      }

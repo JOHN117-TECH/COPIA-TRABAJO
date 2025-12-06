@@ -1,0 +1,124 @@
+#import "../fragments/singlePattern.fragment.graphql"
+#import "../fragments/singlePatternSustainabilityAttributes.fragment.graphql"
+
+query SinglePatternQuery($id: ID, $slug: String, $unitSystem: Int, $instanceIds: [ID], $instanceId: ID) {
+        pattern(id: $id, slug: $slug) {
+          ...SinglePatternFragment
+          hasStock
+          cataloguesAvailable
+          code
+          maintenanceGuide
+          zippedImagesUrl(instanceId: $instanceId, hasInstance: true)
+          approvedCleanersPdfUrl
+          transformationGuide
+          catalogStockNumber
+          saleable
+          productcategorization {
+            design
+            __typename
+          }
+          memo {
+            id
+            size
+            __typename
+          }
+          products(instances: $instanceIds) {
+            totalCount
+            edges {
+              node {
+                id
+                code
+                color
+                predominantColors
+                hasStock
+                samplesAvailable
+                stock
+                pantone
+                imageThumbSmall
+                imageThumbMedium
+                imageThumbLarge
+                isNew
+                __typename
+              }
+              __typename
+            }
+            __typename
+          }
+          specsSheetData(
+            fullVersion: false
+            unitSystem: $unitSystem
+            limitAdditionalTests: true
+          )
+          otherattributes {
+            certificateDomain
+            __typename
+          }
+          packagingFsc
+          sustainability {
+            ...SinglePatternSustainabilityAttributes
+            __typename
+          }
+          manufacturingCertifications {
+            id
+            name
+            logo
+            isSustainable
+            __typename
+          }
+          sectors {
+            edges {
+              node {
+                id
+                name
+                market {
+                  id
+                  name
+                  __typename
+                }
+                __typename
+              }
+              __typename
+            }
+            __typename
+          }
+          relatedPatterns(products_Instances: $instanceIds) {
+            totalCount
+            edges {
+              node {
+                ...SinglePattern
+                imageThumbSmall
+                products(instances: $instanceIds) {
+                  totalCount
+                  edges {
+                    node {
+                      id
+                      code
+                      color
+                      predominantColors
+                      hasStock
+                      samplesAvailable
+                      stock
+                      pantone
+                      imageThumbSmall
+                      imageThumbMedium
+                      imageThumbLarge
+                      isNew
+                      __typename
+                    }
+                    __typename
+                  }
+                  __typename
+                }
+                __typename
+              }
+              __typename
+            }
+            __typename
+          }
+          stores {
+            totalCount
+            __typename
+          }
+          __typename
+        }
+      }

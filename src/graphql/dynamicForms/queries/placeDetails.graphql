@@ -1,0 +1,9 @@
+query placeDetails($instanceId: ID!, $placeId: String!) {
+  getPlaceDetails(placeId: $placeId, instanceId: $instanceId) {
+    city
+    country
+    state
+    fullAddress
+    postalCode
+  }
+}

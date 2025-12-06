@@ -1,0 +1,9 @@
+query getMarkets($instanceIds: [ID]!, $saleable: Boolean) {
+  markets(instances: $instanceIds) {
+    edges {
+      node {
+        ...MarketFields
+      }
+    }
+  }
+}

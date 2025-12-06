@@ -1,0 +1,24 @@
+query postsByCategory ($first: Int, $last: Int, $afterCursor: String, $beforeCursor: String, $instances: [ID], $category: [ID]) {
+  posts(
+    categories:$category
+    first: $first
+    last: $last
+    after: $afterCursor
+    before: $beforeCursor
+    instances: $instances
+  ) {
+    edges{
+      node{
+        id
+        title
+        publicationDatetime
+        slug
+        content
+        altText
+        summary
+        tags
+        listingImageThumbSmall
+      }
+    }
+  }
+}

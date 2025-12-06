@@ -1,0 +1,14 @@
+query companyTypesQuery($instanceIds: [ID]!) {
+  companyTypes(instances: $instanceIds) {
+    edges {
+      node {
+        id
+        name
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+}
+

@@ -1,0 +1,37 @@
+fragment UserFragment on UserNode {
+  id
+  email
+  password
+  fullName
+  firstName
+  lastName
+  profile {
+    phone
+    company
+    city {
+      id
+      name
+      region {
+        id
+        name
+        __typename
+      }
+      country {
+        id
+        name
+        __typename
+      }
+      __typename
+    }
+    address
+    zipCode
+    companyType {
+      id
+      name
+      __typename
+    }
+    position
+    __typename
+  }
+  __typename
+}

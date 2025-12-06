@@ -1,0 +1,42 @@
+query GetDynamicForm($id: ID!) {
+  contactForm(id: $id) {
+    id
+    title
+    description
+    active
+    fields {
+      edges {
+        node {
+          id
+          form {
+            id
+          }
+          name
+          label
+          placeholder
+          fieldType
+          required
+          order
+          width
+          dependsOn {
+            id
+            name
+            label
+          }
+          options {
+            edges {
+              node {
+                field {
+                  id
+                }
+                label
+                value
+                order
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
