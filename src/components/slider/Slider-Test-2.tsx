@@ -1,10 +1,10 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import Image, { StaticImageData } from 'next/image';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import type { Swiper as SwiperClass } from 'swiper';
-import { Navigation, Autoplay } from 'swiper/modules';
+import { Navigation } from 'swiper/modules';
 
 import 'swiper/css';
 import 'swiper/css/navigation';
@@ -22,7 +22,7 @@ type SlideItem = {
 
 interface HomeSliderProps {
   items: SlideItem[];
-  timePerSlide?: number; // ms, por defecto 8000
+  timePerSlide?: number; // ms
 }
 
 // helper para saber si un item es video
@@ -31,57 +31,68 @@ const isVideoSlide = (item: SlideItem): boolean => {
     item.type === 'video' ||
     (typeof item.videoUrl === 'string' &&
       item.videoUrl.includes('player.vimeo.com')) ||
-    (typeof item.src === 'string' &&
-      (item.src as string).includes('player.vimeo.com'))
+    (typeof item.src === 'string' && item.src.includes('player.vimeo.com'))
   );
 };
 
 const HomeSlider = ({ items, timePerSlide = 8000 }: HomeSliderProps) => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [videoProgress, setVideoProgress] = useState(0); // 0–100
+
   const swiperRef = useRef<SwiperClass | null>(null);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   if (!items || !items.length) return null;
+
+  // 🔹 helpers para el temporizador de las imágenes
+  const clearImageTimer = () => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  };
+
+  const startImageTimer = (index: number) => {
+    clearImageTimer();
+    const slide = items[index];
+    if (!slide || isVideoSlide(slide)) return; // sólo imágenes
+
+    timerRef.current = setTimeout(() => {
+      swiperRef.current?.slideNext();
+    }, timePerSlide);
+  };
+
+  // al montar, programamos el timer del primer slide
+  useEffect(() => {
+    startImageTimer(0);
+    return clearImageTimer;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <section className="relative w-full text-white">
       {/* SLIDER PRINCIPAL */}
       <Swiper
-        modules={[Navigation, Autoplay]}
+        modules={[Navigation]}
         onSwiper={(swiper) => {
           swiperRef.current = swiper;
-
-          const firstIdx = swiper.realIndex ?? swiper.activeIndex ?? 0;
-          const firstItem = items[firstIdx];
-
-          // si el primer slide es video, paramos autoplay
-          if (firstItem && isVideoSlide(firstItem) && swiper.autoplay) {
-            swiper.autoplay.stop();
-          }
         }}
         onSlideChange={(swiper) => {
           const idx = swiper.realIndex ?? swiper.activeIndex ?? 0;
           setActiveIndex(idx);
-          setVideoProgress(0); // 🔥 SIEMPRE reiniciamos barra
+          setVideoProgress(0);
 
           const currentItem = items[idx];
-
-          if (!swiper.autoplay) return;
-
           if (currentItem && isVideoSlide(currentItem)) {
-            // 🎥 video → no autoplay de Swiper
-            swiper.autoplay.stop();
+            // 🎥 vídeo → no timer, el avance lo hace onEnded
+            clearImageTimer();
           } else {
-            // 🖼 imagen → autoplay normal
-            swiper.autoplay.start();
+            // 🖼 imagen → programamos timer
+            startImageTimer(idx);
           }
         }}
         slidesPerView={1}
         loop
-        autoplay={{
-          delay: timePerSlide,
-          disableOnInteraction: false,
-        }}
         allowTouchMove
         className="w-full"
       >
@@ -89,23 +100,27 @@ const HomeSlider = ({ items, timePerSlide = 8000 }: HomeSliderProps) => {
           const isVideo = isVideoSlide(item);
           const isActive = index === activeIndex;
 
+          // ID o URL de Vimeo
+          const videoId =
+            (typeof item.src === 'string' ? item.src : undefined) ??
+            item.vimeoId ??
+            item.videoUrl ??
+            '';
+
           return (
             <SwiperSlide key={index}>
               <div className="relative w-full h-[420px] md:h-[520px] lg:h-[620px] overflow-hidden">
-                {isVideo && item.vimeoId ? (
+                {isVideo && videoId ? (
                   <VimeoSlide
                     className="h-full w-full"
-                    vimeoId={item.vimeoId}
+                    vimeoId={videoId}
                     active={isActive}
                     onVideoProgress={(percent) => {
-                      // solo usamos el progreso si el slide está activo
                       if (!isActive) return;
                       setVideoProgress(percent);
                     }}
                     onPlay={() => {
-                      if (swiperRef.current?.autoplay) {
-                        swiperRef.current.autoplay.stop();
-                      }
+                      // nada especial aquí, el timer ya está parado
                     }}
                     onEnded={() => {
                       setVideoProgress(100);
@@ -201,7 +216,6 @@ const HomeSlider = ({ items, timePerSlide = 8000 }: HomeSliderProps) => {
                             animationDuration: `${timePerSlide}ms`,
                           }
                       : {
-                          // cualquier NO activo → reset a 0
                           animation: 'none',
                           transform: 'scaleX(0)',
                         }

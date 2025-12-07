@@ -1,17 +1,16 @@
 'use client';
 
-import React, { useRef } from 'react';
+import React from 'react';
 import VimeoPlayer from '@u-wave/react-vimeo';
 
-export interface VimeoSlideProps extends React.HTMLAttributes<HTMLDivElement> {
-  vimeoId: string;
-  /** si el slide está activo en el Swiper */
+interface VimeoSlideProps {
+  vimeoId: string; // ✅ sólo string
   active?: boolean;
-  /** 0–100 de progreso para la barra del tab */
   onVideoProgress?: (percent: number) => void;
   onPlay?: () => void;
   onPause?: () => void;
   onEnded?: () => void;
+  className?: string;
 }
 
 export default function VimeoSlide({
@@ -22,39 +21,25 @@ export default function VimeoSlide({
   onPause,
   onEnded,
   className,
-  ...rest
 }: VimeoSlideProps) {
-  const lastUpdate = useRef(0);
-
   return (
-    <div className={`h-full w-full ${className ?? ''}`} {...rest}>
+    <div className={className}>
       <VimeoPlayer
         video={vimeoId}
-        autoplay={active}
-        paused={!active}
-        muted
-        controls={false}
+        autoplay={active} // se reproduce cuando el slide está activo
+        muted // 🔇 necesario para que el autoplay no sea bloqueado
         background
-        width="100%"
-        height="100%"
+        controls={false} // pon true si quieres depurar
+        responsive
+        playsInline
+        onTimeUpdate={(data: any) => {
+          if (!onVideoProgress) return;
+          const percent = (data?.percent ?? 0) * 100;
+          onVideoProgress(percent);
+        }}
         onPlay={onPlay}
         onPause={onPause}
         onEnd={onEnded}
-        onTimeUpdate={(e: any) => {
-          if (!active || !e) return;
-
-          const now = Date.now();
-          // limitamos frecuencia de actualización
-          if (now - lastUpdate.current < 150) return;
-          lastUpdate.current = now;
-
-          const { seconds, duration } = e;
-          if (!duration && duration !== 0) return;
-
-          const percent = duration > 0 ? (seconds / duration) * 100 : 0;
-
-          onVideoProgress?.(percent);
-        }}
       />
     </div>
   );
