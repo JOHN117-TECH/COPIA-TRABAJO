@@ -2,9 +2,10 @@
 
 import { useEffect, useRef } from 'react';
 import VimeoPlayer from '@u-wave/react-vimeo';
+import { StaticImageData } from 'next/image';
 
 interface VimeoSlideProps {
-  vimeoId: string; // id o url de Vimeo
+  vimeoId: string | StaticImageData; // id o url de Vimeo
   active?: boolean;
   onVideoProgress?: (percent: number) => void; // 0–100
   onPlay?: () => void;

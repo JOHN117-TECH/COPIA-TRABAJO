@@ -23,9 +23,10 @@ type SlideItem = {
 interface HomeSliderProps {
   items: SlideItem[];
   timePerSlide?: number; // ms
+  slidesPerView?: number; // 👈 prop
 }
 
-// helper para saber si un item es video
+// ¿es vídeo?
 const isVideoSlide = (item: SlideItem): boolean => {
   return (
     item.type === 'video' ||
@@ -36,14 +37,32 @@ const isVideoSlide = (item: SlideItem): boolean => {
   );
 };
 
-const HomeSlider = ({ items, timePerSlide = 8000 }: HomeSliderProps) => {
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [progress, setProgress] = useState(0); // 0–100 para el slide activo
+const HomeSlider = ({
+  items,
+  timePerSlide = 8000,
+  slidesPerView = 1,
+}: HomeSliderProps) => {
+  const [activeIndex, setActiveIndex] = useState(0); // índice del primer slide visible
+  const [progress, setProgress] = useState(0); // 0–100 para la PÁGINA activa
 
   const swiperRef = useRef<SwiperClass | null>(null);
   const imageTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   if (!items || !items.length) return null;
+
+  const totalPages = Math.ceil(items.length / slidesPerView);
+  const lastStartIndex = Math.max(items.length - slidesPerView, 0);
+
+  // --- helpers de paginación ------------------------------------
+  const getPageFromIndex = (index: number): number => {
+    if (index >= lastStartIndex) return totalPages - 1; // último grupo
+    return Math.floor(index / slidesPerView);
+  };
+
+  const getFirstIndexOfPage = (pageIndex: number): number => {
+    if (pageIndex >= totalPages - 1) return lastStartIndex; // última página
+    return pageIndex * slidesPerView;
+  };
 
   const clearImageTimer = () => {
     if (imageTimerRef.current) {
@@ -52,85 +71,96 @@ const HomeSlider = ({ items, timePerSlide = 8000 }: HomeSliderProps) => {
     }
   };
 
-  /**
-   * Cada vez que cambia el slide activo:
-   *  - reseteamos la barra a 0
-   *  - si es imagen → arrancamos temporizador JS
-   *  - si es vídeo → la barra la actualizará onVideoProgress
-   */
+  // navegar por página
+  const goToPage = (pageIndex: number) => {
+    if (!swiperRef.current) return;
+    const targetIndex = getFirstIndexOfPage(pageIndex);
+    swiperRef.current.slideTo(targetIndex);
+  };
+
+  const goToNext = () => {
+    if (!swiperRef.current) return;
+    const swiper = swiperRef.current;
+    const current = swiper.activeIndex ?? 0;
+    const currentPage = getPageFromIndex(current);
+    const nextPage = (currentPage + 1) % totalPages;
+    swiper.slideTo(getFirstIndexOfPage(nextPage));
+  };
+
+  const goToPrev = () => {
+    if (!swiperRef.current) return;
+    const swiper = swiperRef.current;
+    const current = swiper.activeIndex ?? 0;
+    const currentPage = getPageFromIndex(current);
+    const prevPage = (currentPage - 1 + totalPages) % totalPages;
+    swiper.slideTo(getFirstIndexOfPage(prevPage));
+  };
+
+  // timer de imágenes (por página)
   useEffect(() => {
     clearImageTimer();
     setProgress(0);
 
-    const current = items[activeIndex];
-    if (!current || isVideoSlide(current)) {
-      // vídeo → no hacemos nada aquí, sólo espera a onVideoProgress
-      return;
-    }
+    const currentPage = getPageFromIndex(activeIndex);
+    const firstIndexOfPage = getFirstIndexOfPage(currentPage);
+    const firstItem = items[firstIndexOfPage];
+
+    // si la página empieza con vídeo, el progreso lo maneja Vimeo
+    if (!firstItem || isVideoSlide(firstItem)) return;
 
     const start = Date.now();
 
     imageTimerRef.current = setInterval(() => {
       const elapsed = Date.now() - start;
-      const ratio = Math.min(1, elapsed / timePerSlide); // 0–1
+      const ratio = Math.min(1, elapsed / timePerSlide);
       setProgress(ratio * 100);
 
       if (ratio >= 1) {
         clearImageTimer();
-        // Avanza sólo si seguimos en este slide
-        swiperRef.current?.slideNext();
+        goToNext();
       }
     }, 80);
 
     return clearImageTimer;
-  }, [activeIndex, items, timePerSlide]);
+  }, [activeIndex, items, timePerSlide, slidesPerView, totalPages]);
 
   return (
     <section className="relative w-full text-white">
-      {/* SLIDER PRINCIPAL */}
       <Swiper
         modules={[Navigation]}
         onSwiper={(swiper) => {
           swiperRef.current = swiper;
         }}
         onSlideChange={(swiper) => {
-          const idx = swiper.realIndex ?? swiper.activeIndex ?? 0;
+          const idx = swiper.activeIndex ?? 0; // 👈 sólo activeIndex
           setActiveIndex(idx);
         }}
-        slidesPerView={1}
-        loop
+        slidesPerView={slidesPerView}
+        slidesPerGroup={slidesPerView}
+        loop={false}
         allowTouchMove
         className="w-full"
       >
         {items.map((item, index) => {
+          const currentPage = getPageFromIndex(activeIndex);
+          const firstIndexOfPage = getFirstIndexOfPage(currentPage);
+          const isPageFirstSlide = index === firstIndexOfPage;
           const isVideo = isVideoSlide(item);
-          const isActive = index === activeIndex;
-
-          // ID o URL de Vimeo
-          const videoId =
-            (typeof item.src === 'string' ? item.src : undefined) ??
-            item.vimeoId ??
-            item.videoUrl ??
-            '';
 
           return (
             <SwiperSlide key={index}>
-              <div className="relative w-full h-[420px] md:h-[520px] lg:h-[620px] overflow-hidden">
-                {isVideo && videoId ? (
+              <div className="relative w-full h-[420px] overflow-hidden">
+                {isVideo ? (
                   <VimeoSlide
                     className="h-full w-full"
-                    vimeoId={videoId}
-                    active={isActive}
-                    onPlay={() => {
-                      if (isActive) setProgress(0); // opcional, por seguridad
-                    }}
+                    vimeoId={`${item.src}`}
+                    active={isPageFirstSlide}
                     onVideoProgress={(percent) => {
-                      if (!isActive) return;
-                      setProgress(percent); // 👈 aquí NO multipliques por 100
+                      setProgress(percent); // progreso de la página
                     }}
                     onEnded={() => {
                       setProgress(100);
-                      swiperRef.current?.slideNext();
+                      goToNext();
                     }}
                   />
                 ) : (
@@ -145,7 +175,7 @@ const HomeSlider = ({ items, timePerSlide = 8000 }: HomeSliderProps) => {
                   )
                 )}
 
-                {/* Degradado y contenido */}
+                {/* degradado y contenido */}
                 <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-black/10" />
                 <div className="relative z-10 flex h-full items-center px-6 md:px-16 lg:px-24">
                   <div className="max-w-xl space-y-4">
@@ -171,7 +201,7 @@ const HomeSlider = ({ items, timePerSlide = 8000 }: HomeSliderProps) => {
       <button
         type="button"
         aria-label="Previous slide"
-        onClick={() => swiperRef.current?.slidePrev()}
+        onClick={goToPrev}
         className="absolute left-6 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white text-black shadow-md hover:scale-105 transition"
       >
         ‹
@@ -180,22 +210,23 @@ const HomeSlider = ({ items, timePerSlide = 8000 }: HomeSliderProps) => {
       <button
         type="button"
         aria-label="Next slide"
-        onClick={() => swiperRef.current?.slideNext()}
+        onClick={goToNext}
         className="absolute right-6 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white text-black shadow-md hover:scale-105 transition"
       >
         ›
       </button>
 
-      {/* TABS CON BARRA DE PROGRESO */}
+      {/* TABS POR PÁGINA */}
       <div className="pointer-events-none absolute bottom-8 left-1/2 z-20 flex w-full max-w-xl -translate-x-1/2 gap-3 px-6">
-        {items.map((item, index) => {
-          const isActive = index === activeIndex;
+        {Array.from({ length: totalPages }).map((_, pageIndex) => {
+          const activePage = getPageFromIndex(activeIndex);
+          const isActive = pageIndex === activePage;
 
           return (
             <button
-              key={index}
+              key={pageIndex}
               type="button"
-              onClick={() => swiperRef.current?.slideToLoop(index)}
+              onClick={() => goToPage(pageIndex)}
               className="pointer-events-auto flex-1"
             >
               <div className="progress-tab">
@@ -204,9 +235,7 @@ const HomeSlider = ({ items, timePerSlide = 8000 }: HomeSliderProps) => {
                     'progress-tab-fill ' +
                     (isActive ? 'bg-emerald-400' : 'bg-white/30')
                   }
-                  style={{
-                    width: `${isActive ? progress : 0}%`, // 0–100 %
-                  }}
+                  style={{ width: `${isActive ? progress : 0}%` }}
                 />
               </div>
             </button>
