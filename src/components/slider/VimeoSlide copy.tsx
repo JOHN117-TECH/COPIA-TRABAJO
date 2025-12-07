@@ -27,7 +27,7 @@ export default function VimeoSlide({
 
   // cuando el slide se vuelve activo otra vez después de haber estado inactivo,
   // reiniciamos el vídeo desde 0 y lo reproducimos.
-  useEffect(() => {
+  /* useEffect(() => {
     const player = playerRef.current;
     if (!player) {
       prevActiveRef.current = active;
@@ -50,7 +50,7 @@ export default function VimeoSlide({
     }
 
     prevActiveRef.current = active;
-  }, [active]);
+  }, [active]); */
 
   return (
     <div className={className}>

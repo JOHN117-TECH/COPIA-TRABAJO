@@ -25,7 +25,7 @@ interface HomeSliderProps {
   timePerSlide?: number; // ms
 }
 
-// helper para saber si un item es video
+// helper: ¿es un vídeo?
 const isVideoSlide = (item: SlideItem): boolean => {
   return (
     item.type === 'video' ||
@@ -52,19 +52,41 @@ const HomeSlider = ({ items, timePerSlide = 8000 }: HomeSliderProps) => {
     }
   };
 
+  // helpers para navegar SIN usar loop de Swiper
+  const goToSlide = (index: number) => {
+    if (!swiperRef.current) return;
+    swiperRef.current.slideTo(index);
+  };
+
+  const goToNext = () => {
+    if (!swiperRef.current) return;
+    const swiper = swiperRef.current;
+    const current = swiper.realIndex ?? swiper.activeIndex ?? 0;
+    const next = (current + 1) % items.length;
+    swiper.slideTo(next);
+  };
+
+  const goToPrev = () => {
+    if (!swiperRef.current) return;
+    const swiper = swiperRef.current;
+    const current = swiper.realIndex ?? swiper.activeIndex ?? 0;
+    const prev = (current - 1 + items.length) % items.length;
+    swiper.slideTo(prev);
+  };
+
   /**
    * Cada vez que cambia el slide activo:
    *  - reseteamos la barra a 0
    *  - si es imagen → arrancamos temporizador JS
-   *  - si es vídeo → la barra la actualizará onVideoProgress
+   *  - si es vídeo → la barra la actualizará onVideoProgress del VimeoSlide
    */
   useEffect(() => {
     clearImageTimer();
-    setProgress(0);
+    setProgress(0); // siempre empezamos en 0%
 
     const current = items[activeIndex];
     if (!current || isVideoSlide(current)) {
-      // vídeo → no hacemos nada aquí, sólo espera a onVideoProgress
+      // vídeo → no hacemos nada aquí; el VimeoSlide mandará progreso real
       return;
     }
 
@@ -77,8 +99,7 @@ const HomeSlider = ({ items, timePerSlide = 8000 }: HomeSliderProps) => {
 
       if (ratio >= 1) {
         clearImageTimer();
-        // Avanza sólo si seguimos en este slide
-        swiperRef.current?.slideNext();
+        goToNext();
       }
     }, 80);
 
@@ -98,14 +119,14 @@ const HomeSlider = ({ items, timePerSlide = 8000 }: HomeSliderProps) => {
           setActiveIndex(idx);
         }}
         slidesPerView={1}
-        loop
+        // 👇 Importante: SIN loop, lo gestionamos a mano con goToNext/goToPrev
+        loop={false}
         allowTouchMove
         className="w-full"
       >
         {items.map((item, index) => {
           const isVideo = isVideoSlide(item);
           const isActive = index === activeIndex;
-
           // ID o URL de Vimeo
           const videoId =
             (typeof item.src === 'string' ? item.src : undefined) ??
@@ -121,16 +142,14 @@ const HomeSlider = ({ items, timePerSlide = 8000 }: HomeSliderProps) => {
                     className="h-full w-full"
                     vimeoId={videoId}
                     active={isActive}
-                    onPlay={() => {
-                      if (isActive) setProgress(0); // opcional, por seguridad
-                    }}
                     onVideoProgress={(percent) => {
-                      if (!isActive) return;
-                      setProgress(percent); // 👈 aquí NO multipliques por 100
+                      // progreso real del vídeo (0–100)
+                      setProgress(percent);
                     }}
                     onEnded={() => {
+                      // cuando termina el vídeo, pasamos al siguiente slide
                       setProgress(100);
-                      swiperRef.current?.slideNext();
+                      goToNext();
                     }}
                   />
                 ) : (
@@ -171,7 +190,7 @@ const HomeSlider = ({ items, timePerSlide = 8000 }: HomeSliderProps) => {
       <button
         type="button"
         aria-label="Previous slide"
-        onClick={() => swiperRef.current?.slidePrev()}
+        onClick={goToPrev}
         className="absolute left-6 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white text-black shadow-md hover:scale-105 transition"
       >
         ‹
@@ -180,7 +199,7 @@ const HomeSlider = ({ items, timePerSlide = 8000 }: HomeSliderProps) => {
       <button
         type="button"
         aria-label="Next slide"
-        onClick={() => swiperRef.current?.slideNext()}
+        onClick={goToNext}
         className="absolute right-6 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white text-black shadow-md hover:scale-105 transition"
       >
         ›
@@ -188,14 +207,14 @@ const HomeSlider = ({ items, timePerSlide = 8000 }: HomeSliderProps) => {
 
       {/* TABS CON BARRA DE PROGRESO */}
       <div className="pointer-events-none absolute bottom-8 left-1/2 z-20 flex w-full max-w-xl -translate-x-1/2 gap-3 px-6">
-        {items.map((item, index) => {
+        {items.map((_, index) => {
           const isActive = index === activeIndex;
 
           return (
             <button
               key={index}
               type="button"
-              onClick={() => swiperRef.current?.slideToLoop(index)}
+              onClick={() => goToSlide(index)}
               className="pointer-events-auto flex-1"
             >
               <div className="progress-tab">

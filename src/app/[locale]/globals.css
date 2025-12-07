@@ -444,23 +444,6 @@ input[type='search']::-webkit-search-cancel-button {
   --breakpoint-md: 1024px;
 }
 
-/* ---- Slider progress tabs ---- */
-.progress-tab {
-  position: relative;
-  width: 100%;
-  height: 6px;
-  border-radius: 9999px;
-  background-color: rgba(255, 255, 255, 0.25);
-  overflow: hidden;
-}
-
-.progress-tab-fill {
-  position: absolute;
-  inset: 0;
-  border-radius: 9999px;
-  transform-origin: left;
-}
-
 /* Animación que llena la barra de izquierda a derecha */
 .progress-tab {
   position: relative;
