@@ -15,7 +15,7 @@ type SlideItem = {
   src?: string | StaticImageData;
   title?: string;
   description?: string;
-  type?: string; // 'image' | 'video'
+  type?: 'image' | 'video' | string;
   videoUrl?: string;
   vimeoId?: string;
 };
@@ -31,43 +31,59 @@ const isVideoSlide = (item: SlideItem): boolean => {
     item.type === 'video' ||
     (typeof item.videoUrl === 'string' &&
       item.videoUrl.includes('player.vimeo.com')) ||
-    (typeof item.src === 'string' && item.src.includes('player.vimeo.com'))
+    (typeof item.src === 'string' && item.src.includes('player.vimeo.com')) ||
+    !!item.vimeoId
   );
 };
 
 const HomeSlider = ({ items, timePerSlide = 8000 }: HomeSliderProps) => {
   const [activeIndex, setActiveIndex] = useState(0);
-  const [videoProgress, setVideoProgress] = useState(0); // 0–100
+  const [progress, setProgress] = useState(0); // 0–100 para el slide activo
 
   const swiperRef = useRef<SwiperClass | null>(null);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const imageTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   if (!items || !items.length) return null;
 
-  // 🔹 helpers para el temporizador de las imágenes
   const clearImageTimer = () => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
+    if (imageTimerRef.current) {
+      clearInterval(imageTimerRef.current);
+      imageTimerRef.current = null;
     }
   };
 
-  const startImageTimer = (index: number) => {
-    clearImageTimer();
-    const slide = items[index];
-    if (!slide || isVideoSlide(slide)) return; // sólo imágenes
-
-    timerRef.current = setTimeout(() => {
-      swiperRef.current?.slideNext();
-    }, timePerSlide);
-  };
-
-  // al montar, programamos el timer del primer slide
+  /**
+   * Cada vez que cambia el slide activo:
+   *  - reseteamos la barra a 0
+   *  - si es imagen → arrancamos temporizador JS
+   *  - si es vídeo → la barra la actualizará onVideoProgress
+   */
   useEffect(() => {
-    startImageTimer(0);
+    clearImageTimer();
+    setProgress(0);
+
+    const current = items[activeIndex];
+    if (!current || isVideoSlide(current)) {
+      // vídeo → no hacemos nada aquí, sólo espera a onVideoProgress
+      return;
+    }
+
+    const start = Date.now();
+
+    imageTimerRef.current = setInterval(() => {
+      const elapsed = Date.now() - start;
+      const ratio = Math.min(1, elapsed / timePerSlide); // 0–1
+      setProgress(ratio * 100);
+
+      if (ratio >= 1) {
+        clearImageTimer();
+        // Avanza sólo si seguimos en este slide
+        swiperRef.current?.slideNext();
+      }
+    }, 80);
+
     return clearImageTimer;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [activeIndex, items, timePerSlide]);
 
   return (
     <section className="relative w-full text-white">
@@ -80,16 +96,6 @@ const HomeSlider = ({ items, timePerSlide = 8000 }: HomeSliderProps) => {
         onSlideChange={(swiper) => {
           const idx = swiper.realIndex ?? swiper.activeIndex ?? 0;
           setActiveIndex(idx);
-          setVideoProgress(0);
-
-          const currentItem = items[idx];
-          if (currentItem && isVideoSlide(currentItem)) {
-            // 🎥 vídeo → no timer, el avance lo hace onEnded
-            clearImageTimer();
-          } else {
-            // 🖼 imagen → programamos timer
-            startImageTimer(idx);
-          }
         }}
         slidesPerView={1}
         loop
@@ -115,15 +121,15 @@ const HomeSlider = ({ items, timePerSlide = 8000 }: HomeSliderProps) => {
                     className="h-full w-full"
                     vimeoId={videoId}
                     active={isActive}
+                    onPlay={() => {
+                      if (isActive) setProgress(0); // opcional, por seguridad
+                    }}
                     onVideoProgress={(percent) => {
                       if (!isActive) return;
-                      setVideoProgress(percent);
-                    }}
-                    onPlay={() => {
-                      // nada especial aquí, el timer ya está parado
+                      setProgress(percent); // 👈 aquí NO multipliques por 100
                     }}
                     onEnded={() => {
-                      setVideoProgress(100);
+                      setProgress(100);
                       swiperRef.current?.slideNext();
                     }}
                   />
@@ -184,8 +190,6 @@ const HomeSlider = ({ items, timePerSlide = 8000 }: HomeSliderProps) => {
       <div className="pointer-events-none absolute bottom-8 left-1/2 z-20 flex w-full max-w-xl -translate-x-1/2 gap-3 px-6">
         {items.map((item, index) => {
           const isActive = index === activeIndex;
-          const videoTab = isVideoSlide(item);
-          const isActiveVideo = isActive && videoTab;
 
           return (
             <button
@@ -196,30 +200,12 @@ const HomeSlider = ({ items, timePerSlide = 8000 }: HomeSliderProps) => {
             >
               <div className="progress-tab">
                 <span
-                  className={
-                    'progress-tab-fill ' +
-                    (isActive && !isActiveVideo
-                      ? 'progress-bar-animate '
-                      : '') +
-                    (isActive ? 'bg-emerald-400' : 'bg-white/30')
-                  }
-                  style={
-                    isActive
-                      ? isActiveVideo
-                        ? {
-                            // 🎥 vídeo: barra por progreso real
-                            animation: 'none',
-                            transform: `scaleX(${videoProgress / 100})`,
-                          }
-                        : {
-                            // 🖼 imagen: animación CSS usando timePerSlide
-                            animationDuration: `${timePerSlide}ms`,
-                          }
-                      : {
-                          animation: 'none',
-                          transform: 'scaleX(0)',
-                        }
-                  }
+                  className={`progress-tab-fill ${
+                    isActive ? 'bg-emerald-400' : 'bg-white/30'
+                  }`}
+                  style={{
+                    transform: `scaleX(${isActive ? progress / 100 : 0})`,
+                  }}
                 />
               </div>
             </button>
