@@ -3,45 +3,57 @@
 import React, { useRef } from 'react';
 import VimeoPlayer from '@u-wave/react-vimeo';
 
-interface VimeoSlideProps {
+export interface VimeoSlideProps extends React.HTMLAttributes<HTMLDivElement> {
   vimeoId: string;
-  onProgress: (percent: number) => void;
-  onPlay: () => void;
-  onPause: () => void;
-  onEnded: () => void;
-  className?: string;
+  /** si el slide está activo en el Swiper */
+  active?: boolean;
+  /** 0–100 de progreso para la barra del tab */
+  onVideoProgress?: (percent: number) => void;
+  onPlay?: () => void;
+  onPause?: () => void;
+  onEnded?: () => void;
 }
 
 export default function VimeoSlide({
   vimeoId,
-  onProgress,
+  active = false,
+  onVideoProgress,
   onPlay,
   onPause,
   onEnded,
   className,
+  ...rest
 }: VimeoSlideProps) {
   const lastUpdate = useRef(0);
 
   return (
-    <div className={`w-full h-full overflow-hidden ${className}`}>
+    <div className={`h-full w-full ${className ?? ''}`} {...rest}>
       <VimeoPlayer
         video={vimeoId}
-        autoplay
+        autoplay={active}
+        paused={!active}
         muted
         controls={false}
+        background
+        width="100%"
+        height="100%"
         onPlay={onPlay}
         onPause={onPause}
         onEnd={onEnded}
         onTimeUpdate={(e: any) => {
-          if (!e?.seconds || !e?.duration) return;
+          if (!active || !e) return;
 
-          // 🔥 limitamos frecuencia de actualización (para que no “explote” la barra)
           const now = Date.now();
-          if (now - lastUpdate.current < 150) return; // max ~7 updates/seg
+          // limitamos frecuencia de actualización
+          if (now - lastUpdate.current < 150) return;
           lastUpdate.current = now;
 
-          const percent = (e.seconds / e.duration) * 100;
-          onProgress(percent);
+          const { seconds, duration } = e;
+          if (!duration && duration !== 0) return;
+
+          const percent = duration > 0 ? (seconds / duration) * 100 : 0;
+
+          onVideoProgress?.(percent);
         }}
       />
     </div>

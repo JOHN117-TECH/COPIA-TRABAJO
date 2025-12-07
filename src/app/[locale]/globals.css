@@ -477,14 +477,28 @@ input[type='search']::-webkit-search-cancel-button {
   animation-fill-mode: forwards;
 }
 
-/* .swiper {
-  width: 100%;
-  height: 100%;
+.progress-tab {
+  @apply h-1 bg-white/10 rounded-full overflow-hidden;
 }
 
-.swiper-slide {
-  display: flex;
-  flex-direction: 'row';
-  width: 100%;
+.progress-tab-fill {
+  @apply block h-full origin-left;
+  transform: scaleX(0);
+  transition: transform 0.18s linear;
 }
- */
+
+/* la animación que ya usas para las imágenes */
+.progress-bar-animate {
+  animation-name: progress-bar-fill;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+@keyframes progress-bar-fill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}

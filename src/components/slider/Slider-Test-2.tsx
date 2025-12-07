@@ -8,13 +8,14 @@ import { Navigation, Autoplay } from 'swiper/modules';
 
 import 'swiper/css';
 import 'swiper/css/navigation';
+
 import VimeoSlide from './VimeoSlide';
 
 type SlideItem = {
-  src?: string | StaticImageData; // para imágenes
+  src?: string | StaticImageData;
   title?: string;
   description?: string;
-  type?: string; // 👈 ahora es cualquier string y opcional
+  type?: string; // 'image' | 'video'
   videoUrl?: string;
   vimeoId?: string;
 };
@@ -24,22 +25,56 @@ interface HomeSliderProps {
   timePerSlide?: number; // ms, por defecto 8000
 }
 
+// helper para saber si un item es video
+const isVideoSlide = (item: SlideItem): boolean => {
+  return (
+    item.type === 'video' ||
+    (typeof item.videoUrl === 'string' &&
+      item.videoUrl.includes('player.vimeo.com')) ||
+    (typeof item.src === 'string' &&
+      (item.src as string).includes('player.vimeo.com'))
+  );
+};
+
 const HomeSlider = ({ items, timePerSlide = 8000 }: HomeSliderProps) => {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [videoProgress, setVideoProgress] = useState(0); // 0–100
   const swiperRef = useRef<SwiperClass | null>(null);
-  const [videoProgress, setVideoProgress] = useState(0);
+
   if (!items || !items.length) return null;
 
   return (
-    <section className=" w-full text-white">
+    <section className="relative w-full text-white">
       {/* SLIDER PRINCIPAL */}
       <Swiper
         modules={[Navigation, Autoplay]}
         onSwiper={(swiper) => {
           swiperRef.current = swiper;
+
+          const firstIdx = swiper.realIndex ?? swiper.activeIndex ?? 0;
+          const firstItem = items[firstIdx];
+
+          // si el primer slide es video, paramos autoplay
+          if (firstItem && isVideoSlide(firstItem) && swiper.autoplay) {
+            swiper.autoplay.stop();
+          }
         }}
         onSlideChange={(swiper) => {
-          setActiveIndex(swiper.realIndex ?? swiper.activeIndex);
+          const idx = swiper.realIndex ?? swiper.activeIndex ?? 0;
+          setActiveIndex(idx);
+          setVideoProgress(0); // 🔥 SIEMPRE reiniciamos barra
+
+          const currentItem = items[idx];
+
+          if (!swiper.autoplay) return;
+
+          if (currentItem && isVideoSlide(currentItem)) {
+            // 🎥 video → no autoplay de Swiper
+            swiper.autoplay.stop();
+          } else {
+            // 🖼 imagen → autoplay normal
+            swiper.autoplay.start();
+          }
         }}
         slidesPerView={1}
         loop
@@ -51,46 +86,33 @@ const HomeSlider = ({ items, timePerSlide = 8000 }: HomeSliderProps) => {
         className="w-full"
       >
         {items.map((item, index) => {
-          // 👉 Detectamos si este slide es un vídeo (Vimeo)
-          const isVideo =
-            item.type === 'video' ||
-            (typeof item.videoUrl === 'string' &&
-              item.videoUrl.includes('player.vimeo.com')) ||
-            (typeof item.src === 'string' &&
-              item.src.includes('player.vimeo.com'));
-
-          const videoUrl = item.videoUrl ?? (item.src as string | undefined);
+          const isVideo = isVideoSlide(item);
+          const isActive = index === activeIndex;
 
           return (
             <SwiperSlide key={index}>
-              <div className="relative w-full h-[420px] md:h-[520px] lg:h-[620px]">
-                {isVideo && videoUrl ? (
-                  // 🎥 VÍDEO (Vimeo) → NUNCA usar <Image> aquí
-
+              <div className="relative w-full h-[420px] md:h-[520px] lg:h-[620px] overflow-hidden">
+                {isVideo && item.vimeoId ? (
                   <VimeoSlide
                     className="h-full w-full"
-                    vimeoId={item.vimeoId!}
-                    onProgress={(percent) => {
-                      // solo nos importa el slide activo
+                    vimeoId={item.vimeoId}
+                    active={isActive}
+                    onVideoProgress={(percent) => {
+                      // solo usamos el progreso si el slide está activo
+                      if (!isActive) return;
                       setVideoProgress(percent);
                     }}
                     onPlay={() => {
-                      // por si acaso, paramos autoplay
                       if (swiperRef.current?.autoplay) {
                         swiperRef.current.autoplay.stop();
                       }
                     }}
-                    onPause={() => {
-                      // aquí podrías pausar animaciones si tuvieras
-                    }}
                     onEnded={() => {
-                      // barra al 100% y pasamos al siguiente
                       setVideoProgress(100);
                       swiperRef.current?.slideNext();
                     }}
                   />
                 ) : (
-                  // 🖼 IMAGEN NORMAL
                   item.src && (
                     <Image
                       src={item.src}
@@ -102,7 +124,7 @@ const HomeSlider = ({ items, timePerSlide = 8000 }: HomeSliderProps) => {
                   )
                 )}
 
-                {/* Degradado y contenido (igual que antes) */}
+                {/* Degradado y contenido */}
                 <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-black/10" />
                 <div className="relative z-10 flex h-full items-center px-6 md:px-16 lg:px-24">
                   <div className="max-w-xl space-y-4">
@@ -143,20 +165,12 @@ const HomeSlider = ({ items, timePerSlide = 8000 }: HomeSliderProps) => {
         ›
       </button>
 
-      {/* TABS CON BARRA DE PROGRESO (ya las tenías configuradas) */}
+      {/* TABS CON BARRA DE PROGRESO */}
       <div className="pointer-events-none absolute bottom-8 left-1/2 z-20 flex w-full max-w-xl -translate-x-1/2 gap-3 px-6">
         {items.map((item, index) => {
           const isActive = index === activeIndex;
-
-          // si tienes videoProgress, puedes seguir usándolo aquí
-          const isVideoTab =
-            item.type === 'video' ||
-            (typeof item.videoUrl === 'string' &&
-              item.videoUrl.includes('player.vimeo.com')) ||
-            (typeof item.src === 'string' &&
-              item.src.includes('player.vimeo.com'));
-
-          const isActiveVideo = isActive && isVideoTab;
+          const videoTab = isVideoSlide(item);
+          const isActiveVideo = isActive && videoTab;
 
           return (
             <button
@@ -169,22 +183,25 @@ const HomeSlider = ({ items, timePerSlide = 8000 }: HomeSliderProps) => {
                 <span
                   className={
                     'progress-tab-fill ' +
-                    (isActive ? 'bg-emerald-400' : 'bg-white/30') // 🟢 solo activo
+                    (isActive && !isActiveVideo
+                      ? 'progress-bar-animate '
+                      : '') +
+                    (isActive ? 'bg-emerald-400' : 'bg-white/30')
                   }
                   style={
                     isActive
                       ? isActiveVideo
                         ? {
-                            // vídeo: barra según porcentaje real
+                            // 🎥 vídeo: barra por progreso real
                             animation: 'none',
                             transform: `scaleX(${videoProgress / 100})`,
                           }
                         : {
-                            // imagen: animación normal de tiempo
+                            // 🖼 imagen: animación CSS usando timePerSlide
                             animationDuration: `${timePerSlide}ms`,
                           }
                       : {
-                          // ❗ cualquier NO activo vuelve a 0
+                          // cualquier NO activo → reset a 0
                           animation: 'none',
                           transform: 'scaleX(0)',
                         }
