@@ -200,11 +200,12 @@ const HomeSlider = ({ items, timePerSlide = 8000 }: HomeSliderProps) => {
             >
               <div className="progress-tab">
                 <span
-                  className={`progress-tab-fill ${
-                    isActive ? 'bg-emerald-400' : 'bg-white/30'
-                  }`}
+                  className={
+                    'progress-tab-fill ' +
+                    (isActive ? 'bg-emerald-400' : 'bg-white/30')
+                  }
                   style={{
-                    transform: `scaleX(${isActive ? progress / 100 : 0})`,
+                    width: `${isActive ? progress : 0}%`, // 0–100 %
                   }}
                 />
               </div>
